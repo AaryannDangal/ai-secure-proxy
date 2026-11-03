@@ -23,8 +23,19 @@ router.post("/", requireApiKey, async (req, res) => {
   const { prompt, image } = parse.data;
   const customer = (req as any).customer;
 
+  // Load customer-defined block rules
+  const dbRules = await prisma.blockRule.findMany({
+    where: { customerId: customer.id, isActive: true },
+  });
+
+  const customRules = dbRules.map((r) => ({
+    id: r.id,
+    pattern: r.pattern,
+    isRegex: r.isRegex,
+  }));
+
   // Scan text
-  const textResult = scanPrompt({ prompt, image, customerId: customer.id });
+  const textResult = scanPrompt({ prompt, image, customerId: customer.id }, customRules);
 
   // Scan image (placeholder)
   const imageResult = scanImage(!!image);

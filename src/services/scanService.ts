@@ -89,7 +89,16 @@ function detectLanguage(text: string): string {
 
 export type { ScanResult, Verdict };
 
-export function scanPrompt(request: ScanRequest): ScanResult {
+export interface CustomRule {
+  id: string;
+  pattern: string;
+  isRegex: boolean;
+}
+
+export function scanPrompt(
+  request: ScanRequest,
+  customRules: CustomRule[] = []
+): ScanResult {
   const text = request.prompt || "";
   const language = detectLanguage(text);
   const blockedPatterns: string[] = [];
@@ -115,6 +124,28 @@ export function scanPrompt(request: ScanRequest): ScanResult {
     }
   }
 
+  // Check against customer-defined rules (a match always blocks)
+  let customRuleMatched = false;
+  for (const rule of customRules) {
+    let matched = false;
+    try {
+      if (rule.isRegex) {
+        matched = new RegExp(rule.pattern, "i").test(text);
+      } else {
+        matched = text.toLowerCase().includes(rule.pattern.toLowerCase());
+      }
+    } catch {
+      // Invalid regex stored by the customer — skip it rather than crash
+      matched = false;
+    }
+
+    if (matched) {
+      customRuleMatched = true;
+      blockedPatterns.push(rule.id);
+      riskScore += 60;
+    }
+  }
+
   // Heuristic: very long prompts with repetitive "ignore" patterns
   if (text.length > 2000) {
     riskScore += 10;
@@ -123,7 +154,9 @@ export function scanPrompt(request: ScanRequest): ScanResult {
   // Cap risk score
   riskScore = Math.min(riskScore, 100);
 
-  if (riskScore >= 50) {
+  if (customRuleMatched) {
+    verdict = "blocked";
+  } else if (riskScore >= 50) {
     verdict = "blocked";
   } else if (riskScore >= 20) {
     verdict = "flagged";

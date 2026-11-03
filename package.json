@@ -10,7 +10,9 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
-    "migrate": "prisma migrate dev"
+    "migrate": "prisma migrate dev",
+    "seed": "tsx scripts/seed.ts",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": ["ai", "security", "proxy", "jailbreak", "typescript"],
   "author": "Aaryan Prasad Dangal",

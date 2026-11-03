@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import scanRoute from "./routes/scan";
 import scansRoute from "./routes/scans";
+import rulesRoute from "./routes/rules";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.get("/health", (_req, res) => {
 // Routes
 app.use("/v1/scan", scanRoute);
 app.use("/v1/scans", scansRoute);
+app.use("/v1/config/rules", rulesRoute);
 
 // 404
 app.use((_req, res) => {
