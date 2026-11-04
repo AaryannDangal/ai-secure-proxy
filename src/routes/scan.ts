@@ -34,8 +34,12 @@ router.post("/", requireApiKey, async (req, res) => {
     isRegex: r.isRegex,
   }));
 
-  // Scan text
-  const textResult = scanPrompt({ prompt, image, customerId: customer.id }, customRules);
+  // Scan text using the customer's own block threshold
+  const textResult = scanPrompt(
+    { prompt, image, customerId: customer.id },
+    customRules,
+    customer.blockThreshold
+  );
 
   // Scan image (placeholder)
   const imageResult = scanImage(!!image);
@@ -83,6 +87,7 @@ router.post("/", requireApiKey, async (req, res) => {
       reason: result.reason,
       riskScore: result.riskScore,
       language: result.language,
+      blockThreshold: customer.blockThreshold,
     });
     return;
   }
@@ -110,6 +115,7 @@ router.post("/", requireApiKey, async (req, res) => {
       reason: result.reason,
       riskScore: result.riskScore,
       language: result.language,
+      blockThreshold: customer.blockThreshold,
       response: upstreamData,
     });
   } catch (error) {
@@ -123,6 +129,7 @@ router.post("/", requireApiKey, async (req, res) => {
       reason: result.reason,
       riskScore: result.riskScore,
       language: result.language,
+      blockThreshold: customer.blockThreshold,
       response: null,
       upstreamError: "Upstream AI unavailable",
     });

@@ -4,14 +4,16 @@ import Overview from "./components/Overview";
 import ScansTable from "./components/ScansTable";
 import RulesPanel from "./components/RulesPanel";
 import Playground from "./components/Playground";
+import Settings from "./components/Settings";
 
-type Tab = "overview" | "scans" | "rules" | "playground";
+type Tab = "overview" | "scans" | "rules" | "playground" | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "scans", label: "Scans" },
   { id: "rules", label: "Rules" },
   { id: "playground", label: "Playground" },
+  { id: "settings", label: "Settings" },
 ];
 
 const STORAGE_KEY = "ai-secure-proxy-key";
@@ -75,6 +77,7 @@ export default function App() {
         {tab === "scans" && <ScansTable apiKey={apiKey} />}
         {tab === "rules" && <RulesPanel apiKey={apiKey} />}
         {tab === "playground" && <Playground apiKey={apiKey} />}
+        {tab === "settings" && <Settings apiKey={apiKey} />}
       </main>
     </div>
   );

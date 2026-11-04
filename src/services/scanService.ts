@@ -125,7 +125,8 @@ export interface CustomRule {
 
 export function scanPrompt(
   request: ScanRequest,
-  customRules: CustomRule[] = []
+  customRules: CustomRule[] = [],
+  blockThreshold = 60
 ): ScanResult {
   const text = request.prompt || "";
   const language = detectLanguage(text);
@@ -189,7 +190,7 @@ export function scanPrompt(
 
   if (customRuleMatched) {
     verdict = "blocked";
-  } else if (riskScore >= 60) {
+  } else if (riskScore >= blockThreshold) {
     verdict = "blocked";
   } else if (riskScore >= 20) {
     verdict = "flagged";

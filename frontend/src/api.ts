@@ -35,8 +35,17 @@ export interface ScanResponse {
   reason?: string;
   riskScore: number;
   language?: string;
+  blockThreshold?: number;
   response?: unknown;
+  upstreamError?: string;
   error?: string;
+}
+
+export interface ThresholdConfig {
+  blockThreshold: number;
+  flagThreshold: number;
+  min: number;
+  max: number;
 }
 
 async function request<T>(
@@ -64,6 +73,15 @@ async function request<T>(
 
 export const api = {
   stats: (key: string) => request<Stats>("/v1/scans/stats", key),
+
+  threshold: (key: string) =>
+    request<ThresholdConfig>("/v1/config/threshold", key),
+
+  setThreshold: (key: string, blockThreshold: number) =>
+    request<ThresholdConfig>("/v1/config/threshold", key, {
+      method: "PATCH",
+      body: JSON.stringify({ blockThreshold }),
+    }),
 
   scans: (key: string, limit = 100) =>
     request<{ scans: Scan[]; count: number }>(`/v1/scans?limit=${limit}`, key),

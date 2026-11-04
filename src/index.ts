@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import scanRoute from "./routes/scan";
 import scansRoute from "./routes/scans";
 import rulesRoute from "./routes/rules";
+import thresholdRoute from "./routes/threshold";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.get("/health", (_req, res) => {
 app.use("/v1/scan", scanRoute);
 app.use("/v1/scans", scansRoute);
 app.use("/v1/config/rules", rulesRoute);
+app.use("/v1/config/threshold", thresholdRoute);
 
 // 404
 app.use((_req, res) => {
