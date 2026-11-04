@@ -19,6 +19,6 @@ export interface JailbreakPattern {
   pattern: string | RegExp;
   isRegex: boolean;
   language: string; // "en", "de", "ne", "all"
-  severity: "low" | "medium" | "high";
+  severity: "low" | "medium" | "high" | "critical";
   description: string;
 }

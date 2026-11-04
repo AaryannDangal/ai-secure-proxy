@@ -38,6 +38,23 @@ const DEFAULT_PATTERNS: JailbreakPattern[] = [
     severity: "high",
     description: "Attempting to extract the system prompt",
   },
+  {
+    id: "en-unrestricted-variants",
+    pattern: /(act as|pretend to be|pretend you are|behave as|you are).*(unfiltered|unrestricted|jailbroken)\s+(ai|model|assistant|chatbot)/i,
+    isRegex: true,
+    language: "en",
+    severity: "critical",
+    description: "Asking to bypass safety restrictions",
+  },
+
+  {
+    id: "en-vague-bypass",
+    pattern: /(ignore|bypass|skip|pretend you|act as).*(no (limits|rules|restrictions|filters)|without (limits|rules|restrictions|filters))/i,
+    isRegex: true,
+    language: "en",
+    severity: "high",
+    description: "Vague request to bypass restrictions without naming an AI",
+  },
   // German
   {
     id: "de-ignore-anweisungen",
@@ -115,12 +132,17 @@ export function scanPrompt(
       matched = text.toLowerCase().includes(pattern.pattern.toLowerCase());
     }
 
-    if (matched) {
-      // Only flag if language matches or pattern applies to all
-      if (pattern.language === "all" || pattern.language === language) {
-        blockedPatterns.push(pattern.id);
-        riskScore += pattern.severity === "high" ? 40 : pattern.severity === "medium" ? 20 : 10;
-      }
+    // Only flag if language matches or pattern applies to all
+    if (matched && (pattern.language === "all" || pattern.language === language)) {
+      blockedPatterns.push(pattern.id);
+      riskScore +=
+        pattern.severity === "critical"
+          ? 60
+          : pattern.severity === "high"
+            ? 40
+            : pattern.severity === "medium"
+              ? 20
+              : 10;
     }
   }
 
@@ -156,7 +178,7 @@ export function scanPrompt(
 
   if (customRuleMatched) {
     verdict = "blocked";
-  } else if (riskScore >= 50) {
+  } else if (riskScore >= 60) {
     verdict = "blocked";
   } else if (riskScore >= 20) {
     verdict = "flagged";
