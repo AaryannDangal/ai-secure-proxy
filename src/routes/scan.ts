@@ -113,10 +113,20 @@ router.post("/", requireApiKey, async (req, res) => {
       response: upstreamData,
     });
   } catch (error) {
-    res.status(502).json({
-      error: "Upstream AI unavailable",
+    // The scan succeeded; only the upstream AI call failed.
+    // Return the scan result anyway so the caller can act on the verdict.
+    console.error("Upstream AI failed:", error);
+
+    res.status(200).json({
+      blocked: false,
       verdict: result.verdict,
+      reason: result.reason,
+      riskScore: result.riskScore,
+      language: result.language,
+      response: null,
+      upstreamError: "Upstream AI unavailable",
     });
+
   }
 });
 
