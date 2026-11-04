@@ -1,4 +1,5 @@
 import { ScanRequest, ScanResult, Verdict, JailbreakPattern } from "../types";
+import franc from "franc";
 
 /**
  * Built-in jailbreak patterns for English, German, and Nepali.
@@ -92,16 +93,26 @@ const DEFAULT_PATTERNS: JailbreakPattern[] = [
 ];
 
 /**
- * Simple language detection based on script/character ranges.
- * In production, use a proper library like `franc` or `compromise`.
+ * Detects the language of a prompt: "en", "de", "ne", or "unknown".
+ *
+ * Uses `franc` (trigram-based, offline, deterministic). Text too short to
+ * classify comes back as "und" from franc — we report "unknown" rather than
+ * guessing "en", because a wrong label is worse than no label.
+ *
+ * Language is logging/display metadata only. It never gates pattern matching.
  */
 function detectLanguage(text: string): string {
-  const nepaliChars = /[\u0900-\u097F]/; // Devanagari range
-  const germanChars = /[äöüßÄÖÜ]/;
+  if (!text || text.trim().length === 0) return "unknown";
 
-  if (nepaliChars.test(text)) return "ne";
-  if (germanChars.test(text)) return "de";
-  return "en";
+  const code = franc(text, { minLength: 3 });
+
+  const NAMES: Record<string, string> = {
+    eng: "en",
+    deu: "de",
+    nep: "ne",
+  };
+
+  return NAMES[code] ?? "unknown";
 }
 
 export type { ScanResult, Verdict };
