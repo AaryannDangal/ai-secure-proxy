@@ -7,6 +7,7 @@ import scanRoute from "./routes/scan";
 import scansRoute from "./routes/scans";
 import rulesRoute from "./routes/rules";
 import thresholdRoute from "./routes/threshold";
+import { warmUp } from "./services/semantic";
 
 dotenv.config();
 
@@ -52,4 +53,9 @@ app.use(
 
 app.listen(PORT, () => {
   console.log(`AI-Secure Proxy running on http://localhost:${PORT}`);
+
+  // Load the embedding model in the background so the first scan is not slow.
+  warmUp()
+    .then(() => console.log("Semantic layer ready"))
+    .catch((error) => console.error("Semantic layer unavailable:", error));
 });

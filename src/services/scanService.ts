@@ -1,5 +1,7 @@
 import { ScanRequest, ScanResult, Verdict, JailbreakPattern } from "../types";
 import franc from "franc";
+import { semanticMatch, semanticRisk } from "./semantic";
+
 
 /**
  * Built-in jailbreak patterns for English, German, and Nepali.
@@ -169,11 +171,11 @@ export interface CustomRule {
   isRegex: boolean;
 }
 
-export function scanPrompt(
+export async function scanPrompt(
   request: ScanRequest,
   customRules: CustomRule[] = [],
   blockThreshold = 60
-): ScanResult {
+): Promise<ScanResult> {
   const original = request.prompt || "";
   const text = normalise(original);
   const language = detectLanguage(original);
@@ -181,7 +183,7 @@ export function scanPrompt(
   const blockedPatterns: string[] = [];
   let riskScore = 0;
   let verdict: Verdict = "safe";
-
+  let semanticReason: string | undefined;
   // Check against built-in patterns
   for (const pattern of DEFAULT_PATTERNS) {
     let matched = false;
@@ -235,6 +237,14 @@ export function scanPrompt(
     riskScore += 10;
   }
 
+  // Advisory only: capped at 40, combined with max() so it never double-counts
+  const semantic = await semanticMatch(text);
+  const semanticScore = semanticRisk(semantic);
+  if (semanticScore > riskScore) {
+    riskScore = semanticScore;
+    semanticReason = `Semantically similar to: "${semantic.seed}"`;
+  }
+
   // Cap risk score
   riskScore = Math.min(riskScore, 100);
 
@@ -248,7 +258,11 @@ export function scanPrompt(
 
   return {
     verdict,
-    reason: blockedPatterns.length > 0 ? `Matched ${blockedPatterns.length} pattern(s)` : undefined,
+    reason:
+      semanticReason ??
+      (blockedPatterns.length > 0
+        ? `Matched ${blockedPatterns.length} pattern(s)`
+        : undefined),
     riskScore,
     language,
     blockedPatterns,

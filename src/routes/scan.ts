@@ -35,7 +35,7 @@ router.post("/", requireApiKey, async (req, res) => {
   }));
 
   // Scan text using the customer's own block threshold
-  const textResult = scanPrompt(
+  const textResult = await scanPrompt(
     { prompt, image, customerId: customer.id },
     customRules,
     customer.blockThreshold

@@ -12,6 +12,7 @@
     "prisma:studio": "prisma studio",
     "migrate": "prisma migrate dev",
     "seed": "tsx scripts/seed.ts",
+  "eval:semantic": "node scripts/eval-semantic.cjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -24,6 +25,7 @@
   "author": "Aaryan Prasad Dangal",
   "license": "MIT",
   "dependencies": {
+    "@huggingface/transformers": "^4.3.2",
     "@prisma/client": "^5.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
