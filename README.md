@@ -226,7 +226,6 @@ Verified against the deployed instance:
 - [ ] Output scanning with canary tokens
 - [ ] Migrations, real auth, Stripe billing — **only after a customer validates the problem**
 
-Billing is deliberately absent. The open question is not "can it be monetised" but *"what has your bot done that it shouldn't have?"* — answered by five conversations, not five more features.
 
 ## License
 
