@@ -1,16 +1,27 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireApiKey, incrementUsage } from "../middleware/auth";
-import { scanPrompt, scanImage, ScanResult } from "../services/scanService";
+import { scanImage, ScanResult } from "../services/scanService";
+import { scanMessages, worstSegment, Message } from "../services/segments";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const router = Router();
 
-const scanSchema = z.object({
-  prompt: z.string().optional(),
-  image: z.string().optional(),
+const messageSchema = z.object({
+  role: z.string().min(1),
+  content: z.string(),
 });
+
+const scanSchema = z
+  .object({
+    prompt: z.string().optional(),
+    messages: z.array(messageSchema).min(1).max(50).optional(),
+    image: z.string().optional(),
+  })
+  .refine((data) => data.prompt !== undefined || data.messages !== undefined, {
+    message: "Provide either prompt or messages",
+  });
 
 router.post("/", requireApiKey, async (req, res) => {
   const parse = scanSchema.safeParse(req.body);
@@ -23,6 +34,10 @@ router.post("/", requireApiKey, async (req, res) => {
   const { prompt, image } = parse.data;
   const customer = (req as any).customer;
 
+  // `prompt` stays supported for existing clients; messages are the new shape.
+  const messages: Message[] =
+    parse.data.messages ?? [{ role: "user", content: prompt ?? "" }];
+
   // Load customer-defined block rules
   const dbRules = await prisma.blockRule.findMany({
     where: { customerId: customer.id, isActive: true },
@@ -34,12 +49,22 @@ router.post("/", requireApiKey, async (req, res) => {
     isRegex: r.isRegex,
   }));
 
-  // Scan text using the customer's own block threshold
-  const textResult = await scanPrompt(
-    { prompt, image, customerId: customer.id },
+  // Scan every message except the customer's own policy (system/developer)
+  const segments = await scanMessages(
+    messages,
     customRules,
     customer.blockThreshold
   );
+
+  const textResult = worstSegment(segments);
+
+  const result: ScanResult = {
+    verdict: textResult?.verdict ?? "safe",
+    reason: textResult?.reason,
+    riskScore: textResult?.riskScore ?? 0,
+    language: textResult?.language,
+    blockedPatterns: textResult?.blockedPatterns ?? [],
+  };
 
   // Scan image (placeholder)
   const imageResult = scanImage(!!image);
@@ -47,52 +72,61 @@ router.post("/", requireApiKey, async (req, res) => {
   // Combine results: worst verdict wins
   const verdictRank: Record<string, number> = { safe: 0, flagged: 1, blocked: 2 };
   const combinedVerdict =
-    verdictRank[imageResult.verdict] > verdictRank[textResult.verdict]
+    verdictRank[imageResult.verdict] > verdictRank[result.verdict]
       ? imageResult.verdict
-      : textResult.verdict;
+      : result.verdict;
 
-  const combinedRiskScore = Math.max(textResult.riskScore, imageResult.riskScore);
-  const combinedReason =
-    textResult.reason || imageResult.reason || undefined;
+  const combinedRiskScore = Math.max(result.riskScore, imageResult.riskScore);
+  const combinedReason = result.reason || imageResult.reason || undefined;
+  const blockedRole =
+    combinedVerdict === "blocked" ? textResult?.role ?? null : null;
 
-  const result: ScanResult = {
-    verdict: combinedVerdict,
-    reason: combinedReason,
-    riskScore: combinedRiskScore,
-    language: textResult.language,
-    blockedPatterns: textResult.blockedPatterns,
-  };
+  // Save scan log (the last user message keeps the dashboard readable)
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
 
-  // Save scan log
   await prisma.scan.create({
     data: {
       customerId: customer.id,
-      prompt,
+      prompt: lastUser?.content ?? messages[0]?.content,
       hasImage: !!image,
+      messageCount: messages.length,
+      blockedRole,
       language: result.language,
-      verdict: result.verdict,
-      reason: result.reason,
-      riskScore: result.riskScore,
+      verdict: combinedVerdict,
+      reason: combinedReason,
+      riskScore: combinedRiskScore,
     },
   });
 
   // Increment usage
   await incrementUsage(customer.id);
 
+  const summary = {
+    blocked: combinedVerdict === "blocked",
+    verdict: combinedVerdict,
+    reason: combinedReason,
+    riskScore: combinedRiskScore,
+    language: result.language,
+    blockThreshold: customer.blockThreshold,
+    blockedRole: blockedRole ?? undefined,
+    segments: segments.map((s) => ({
+      index: s.index,
+      role: s.role,
+      trust: s.trust,
+      threshold: s.threshold,
+      verdict: s.verdict,
+      riskScore: s.riskScore,
+      reason: s.reason,
+    })),
+  };
+
   // If blocked, do NOT forward to upstream AI
-  if (result.verdict === "blocked") {
-    res.status(403).json({
-      blocked: true,
-      verdict: result.verdict,
-      reason: result.reason,
-      riskScore: result.riskScore,
-      language: result.language,
-      blockThreshold: customer.blockThreshold,
-    });
+  if (combinedVerdict === "blocked") {
+    res.status(403).json(summary);
     return;
   }
 
-  // Safe or flagged: forward to upstream AI (your gemini-web2api)
+  // Safe or flagged: forward to upstream AI
   try {
     const upstreamUrl = process.env.UPSTREAM_AI_URL || "http://localhost:8081";
 
@@ -103,37 +137,25 @@ router.post("/", requireApiKey, async (req, res) => {
       },
       body: JSON.stringify({
         model: "gemini-3.5-flash",
-        messages: prompt ? [{ role: "user", content: prompt }] : [],
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
       }),
     });
 
     const upstreamData = await upstreamResponse.json();
 
     res.json({
-      blocked: false,
-      verdict: result.verdict,
-      reason: result.reason,
-      riskScore: result.riskScore,
-      language: result.language,
-      blockThreshold: customer.blockThreshold,
+      ...summary,
       response: upstreamData,
     });
   } catch (error) {
     // The scan succeeded; only the upstream AI call failed.
-    // Return the scan result anyway so the caller can act on the verdict.
     console.error("Upstream AI failed:", error);
 
     res.status(200).json({
-      blocked: false,
-      verdict: result.verdict,
-      reason: result.reason,
-      riskScore: result.riskScore,
-      language: result.language,
-      blockThreshold: customer.blockThreshold,
+      ...summary,
       response: null,
       upstreamError: "Upstream AI unavailable",
     });
-
   }
 });
 

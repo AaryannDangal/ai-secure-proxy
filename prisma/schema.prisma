@@ -27,6 +27,8 @@ model Scan {
   customer    Customer @relation(fields: [customerId], references: [id])
   prompt      String?
   hasImage    Boolean  @default(false)
+    messageCount Int     @default(1)
+  blockedRole  String?
   language    String?
   verdict     String   // safe, blocked, flagged
   reason      String?
