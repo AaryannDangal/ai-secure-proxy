@@ -149,7 +149,18 @@ function normalise(text: string): string {
     .trim()
     .toLowerCase();
 }
+const LEET: Record<string, string> = {
+  "0": "o",
+  "1": "i",
+  "3": "e",
+  "4": "a",
+  "5": "s",
+  "7": "t",
+};
 
+function deleet(text: string): string {
+  return text.replace(/[013457]/g, (c) => LEET[c] ?? c);
+}
 export type { ScanResult, Verdict };
 
 export interface CustomRule {
@@ -166,6 +177,7 @@ export function scanPrompt(
   const original = request.prompt || "";
   const text = normalise(original);
   const language = detectLanguage(original);
+  const leetText = deleet(text);
   const blockedPatterns: string[] = [];
   let riskScore = 0;
   let verdict: Verdict = "safe";
@@ -175,9 +187,11 @@ export function scanPrompt(
     let matched = false;
 
     if (pattern.isRegex && pattern.pattern instanceof RegExp) {
-      matched = pattern.pattern.test(text);
+      matched = pattern.pattern.test(text) || pattern.pattern.test(leetText);
     } else if (typeof pattern.pattern === "string") {
-      matched = text.toLowerCase().includes(pattern.pattern.toLowerCase());
+      matched =
+        text.toLowerCase().includes(pattern.pattern.toLowerCase()) ||
+        leetText.includes(pattern.pattern.toLowerCase());
     }
     // Match regardless of detected language: a jailbreak phrase is the same
     // attack in any language. `language` is kept for logging/display only.
