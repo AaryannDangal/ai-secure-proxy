@@ -16,7 +16,8 @@
     "seed": "node scripts/seed.cjs",
     "eval:semantic": "node scripts/eval-semantic.cjs",
     "typecheck": "tsc --noEmit",
-    "deploy:build": "npm ci --include=dev && npx prisma generate --schema prisma/schema.prod.prisma && npx prisma db push --schema prisma/schema.prod.prisma --skip-generate && npm run build"
+    "deploy:build": "npm ci --include=dev && npx prisma generate --schema prisma/schema.prod.prisma && npm run build",
+    "deploy:db": "npx prisma db push --schema prisma/schema.prod.prisma"
   },
   "keywords": [
     "ai",
