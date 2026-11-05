@@ -25,15 +25,15 @@ model Scan {
   id          String   @id @default(uuid())
   customerId  String
   customer    Customer @relation(fields: [customerId], references: [id])
-  prompt      String?
-  hasImage    Boolean  @default(false)
-    messageCount Int     @default(1)
-  blockedRole  String?
-  language    String?
-  verdict     String   // safe, blocked, flagged
-  reason      String?
-  riskScore   Float    @default(0)
-  createdAt   DateTime @default(now())
+  prompt           String?
+  hasImage         Boolean  @default(false)
+  messageCount     Int      @default(1)
+  blockedRole      String?
+  language         String?
+  verdict          String   // safe, blocked, flagged
+  reason           String?
+  riskScore        Float    @default(0)
+  createdAt        DateTime @default(now())
 
   @@index([customerId])
   @@index([createdAt])

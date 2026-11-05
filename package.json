@@ -8,11 +8,13 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
+    "prisma:generate:prod": "prisma generate --schema prisma/schema.prod.prisma",
     "prisma:push": "prisma db push",
+    "db:push:prod": "prisma db push --schema prisma/schema.prod.prisma",
     "prisma:studio": "prisma studio",
     "migrate": "prisma migrate dev",
-    "seed": "tsx scripts/seed.ts",
-  "eval:semantic": "node scripts/eval-semantic.cjs",
+    "seed": "node scripts/seed.cjs",
+    "eval:semantic": "node scripts/eval-semantic.cjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

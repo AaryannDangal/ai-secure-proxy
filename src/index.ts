@@ -14,9 +14,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Render (and every other PaaS) terminates TLS in front of the app, so the
+// client IP arrives in X-Forwarded-For. Without this, rate limiting sees one
+// IP for every visitor.
+app.set("trust proxy", 1);
+
 // Security middleware
 app.use(helmet());
-app.use(cors());
+
+// In production the dashboard lives on another origin, so it must be allowed
+// explicitly. Comma-separated to support a custom domain later.
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: allowedOrigins.length > 0 ? allowedOrigins : "*",
+  })
+);
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -53,6 +70,14 @@ app.use(
 
 app.listen(PORT, () => {
   console.log(`AI-Secure Proxy running on http://localhost:${PORT}`);
+
+  // The embedding model is ~150 MB and needs ~8 s to load. That does not fit a
+  // small production instance, so it can be switched off with
+  // SEMANTIC_ENABLED=false — the other four layers keep working.
+  if (process.env.SEMANTIC_ENABLED === "false") {
+    console.log("Semantic layer disabled (SEMANTIC_ENABLED=false)");
+    return;
+  }
 
   // Load the embedding model in the background so the first scan is not slow.
   warmUp()

@@ -67,11 +67,14 @@ async function embed(text: string): Promise<Float32Array> {
 }
 
 export async function warmUp(): Promise<void> {
+  if (process.env.SEMANTIC_ENABLED === "false") return;
   if (seedVectors) return;
   seedVectors = await Promise.all(SEMANTIC_SEEDS.map((seed) => embed(seed)));
 }
 
 export async function semanticMatch(text: string): Promise<SemanticMatch> {
+  // Checked at call time, not import time: dotenv has not run when modules load.
+  if (process.env.SEMANTIC_ENABLED === "false") return { score: 0, seed: null };
   if (disabled || !text.trim()) return { score: 0, seed: null };
 
   try {
