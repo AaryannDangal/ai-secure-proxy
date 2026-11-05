@@ -115,6 +115,41 @@ function detectLanguage(text: string): string {
   return NAMES[code] ?? "unknown";
 }
 
+/**
+ * Cyrillic letters that are visually identical to Latin ones.
+ * NFKC does not fold these: they are distinct letters, not compatibility forms.
+ */
+const HOMOGLYPHS: Record<string, string> = {
+  "\u0430": "a", // а
+  "\u0435": "e", // е
+  "\u043E": "o", // о
+  "\u0440": "p", // р
+  "\u0441": "c", // с
+  "\u0443": "y", // у
+  "\u0445": "x", // х
+  "\u0456": "i", // і
+};
+
+/**
+ * Cleans a prompt for matching only. The original is forwarded to the model
+ * unchanged, and language detection still runs on the original.
+ *
+ * Order matters:
+ *   1. NFKC folds compatibility characters to their canonical form.
+ *   2. Homoglyphs are folded before matching (Cyrillic і -> i, etc.).
+ *   3. Zero-width characters are removed (they split phrases invisibly).
+ *   4. Whitespace is collapsed, then lowercased to simplify literal checks.
+ */
+function normalise(text: string): string {
+  return text
+    .normalize("NFKC")
+    .replace(/[\u0430\u0435\u043E\u0440\u0441\u0443\u0445\u0456]/g, (c) => HOMOGLYPHS[c] ?? c)
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 export type { ScanResult, Verdict };
 
 export interface CustomRule {
@@ -128,8 +163,9 @@ export function scanPrompt(
   customRules: CustomRule[] = [],
   blockThreshold = 60
 ): ScanResult {
-  const text = request.prompt || "";
-  const language = detectLanguage(text);
+  const original = request.prompt || "";
+  const text = normalise(original);
+  const language = detectLanguage(original);
   const blockedPatterns: string[] = [];
   let riskScore = 0;
   let verdict: Verdict = "safe";
