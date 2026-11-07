@@ -2,9 +2,10 @@ import { useState } from "react";
 
 interface Props {
   onConnect: (key: string) => void;
+  onDemo: () => void;
 }
 
-export default function ConnectGate({ onConnect }: Props) {
+export default function ConnectGate({ onConnect, onDemo }: Props) {
   const [key, setKey] = useState("");
   const [error, setError] = useState("");
 
@@ -47,6 +48,10 @@ export default function ConnectGate({ onConnect }: Props) {
             Connect to dashboard
           </button>
         </form>
+
+        <button type="button" className="btn ghost full" onClick={onDemo}>
+          Try the demo — no key needed
+        </button>
 
         <p className="hint">
           Your key stays in this browser (localStorage). Create one in your

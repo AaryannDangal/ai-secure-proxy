@@ -587,6 +587,12 @@ tr:last-child td {
   border-color: #33465c;
 }
 
+.chip.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.12);
+}
+
 .result-grid {
   display: grid;
   grid-template-columns: 120px 1fr;

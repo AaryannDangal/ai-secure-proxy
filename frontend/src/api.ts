@@ -36,9 +36,26 @@ export interface ScanResponse {
   riskScore: number;
   language?: string;
   blockThreshold?: number;
+  blockedRole?: string | null;
+  segments?: DemoSegment[];
   response?: unknown;
   upstreamError?: string;
   error?: string;
+}
+
+export interface DemoSegment {
+  index: number;
+  role: string;
+  trust: string;
+  threshold: number;
+  verdict: string;
+  riskScore: number;
+  reason?: string;
+}
+
+export interface DemoPayload {
+  prompt?: string;
+  messages?: { role: string; content: string }[];
 }
 
 export interface ThresholdConfig {
@@ -119,6 +136,24 @@ export const api = {
     const data = await res.json().catch(() => ({}));
 
     // 403 = blocked. That's a valid scan result, not a failure.
+    if (res.ok || res.status === 403) {
+      return data as ScanResponse;
+    }
+
+    throw new Error((data as any).error || `Request failed (${res.status})`);
+  },
+
+  // Public demo: no key, nothing stored, no upstream call.
+  scanDemo: async (payload: DemoPayload): Promise<ScanResponse> => {
+    const res = await fetch(`${BASE}/v1/demo/scan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    // The demo reports blocked as a verdict, not an HTTP error.
     if (res.ok || res.status === 403) {
       return data as ScanResponse;
     }

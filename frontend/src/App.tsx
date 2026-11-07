@@ -5,6 +5,7 @@ import ScansTable from "./components/ScansTable";
 import RulesPanel from "./components/RulesPanel";
 import Playground from "./components/Playground";
 import Settings from "./components/Settings";
+import DemoPanel from "./components/DemoPanel";
 
 type Tab = "overview" | "scans" | "rules" | "playground" | "settings";
 
@@ -23,6 +24,7 @@ export default function App() {
     localStorage.getItem(STORAGE_KEY) || ""
   );
   const [tab, setTab] = useState<Tab>("overview");
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
     if (apiKey) localStorage.setItem(STORAGE_KEY, apiKey);
@@ -33,8 +35,37 @@ export default function App() {
     setApiKey("");
   }
 
+  if (!apiKey && demo) {
+    return (
+      <div className="app">
+        <aside className="sidebar">
+          <div className="logo-row small">
+            <div className="logo-mark">S</div>
+            <div>
+              <strong>AI-Secure Proxy</strong>
+              <p className="muted tiny">Public demo</p>
+            </div>
+          </div>
+          <p className="hint tiny">
+            No account, no key, no stored data. Detection only.
+          </p>
+        </aside>
+
+        <main className="main">
+          <header className="topbar">
+            <h1>Live demo</h1>
+            <span className="pill small">nothing is saved</span>
+          </header>
+          <DemoPanel onExit={() => setDemo(false)} />
+        </main>
+      </div>
+    );
+  }
+
   if (!apiKey) {
-    return <ConnectGate onConnect={setApiKey} />;
+    return (
+      <ConnectGate onConnect={setApiKey} onDemo={() => setDemo(true)} />
+    );
   }
 
   return (

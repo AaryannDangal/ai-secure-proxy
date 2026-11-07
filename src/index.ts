@@ -7,6 +7,7 @@ import scanRoute from "./routes/scan";
 import scansRoute from "./routes/scans";
 import rulesRoute from "./routes/rules";
 import thresholdRoute from "./routes/threshold";
+import demoRoute from "./routes/demo";
 import { warmUp } from "./services/semantic";
 
 dotenv.config();
@@ -51,6 +52,7 @@ app.get("/health", (_req, res) => {
 
 // Routes
 app.use("/v1/scan", scanRoute);
+app.use("/v1/demo", demoRoute);
 app.use("/v1/scans", scansRoute);
 app.use("/v1/config/rules", rulesRoute);
 app.use("/v1/config/threshold", thresholdRoute);

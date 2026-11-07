@@ -14,6 +14,8 @@ client ──▶ AI-Secure Proxy ──▶ upstream model
 
 **Live:** [dashboard](https://ai-secure-proxy-1.onrender.com) · [API health](https://ai-secure-proxy.onrender.com/health)
 
+**No key needed:** open the dashboard and choose **Try the demo** — it runs the real detection pipeline on your prompt, stores nothing, and never calls a model.
+
 > Demo authentication is an API key pasted into the dashboard and stored in `localStorage`. That is deliberate for a demo and is not suitable for real customers; proper auth comes before billing.
 
 ---
@@ -167,6 +169,7 @@ HTTP/2 403
 |---|---|---|
 | `GET` | `/health` | liveness |
 | `POST` | `/v1/scan` | scan `prompt` or `messages`, maybe forward upstream |
+| `POST` | `/v1/demo/scan` | public, keyless, rate-limited, nothing stored, no upstream |
 | `GET` | `/v1/scans` | recent scan log |
 | `GET` | `/v1/scans/stats` | totals + usage |
 | `GET/POST/PATCH/DELETE` | `/v1/config/rules` | custom block rules |
@@ -221,6 +224,7 @@ Verified against the deployed instance:
 - [x] Multilingual detection (EN/DE/NE) without a language gate
 - [x] Advisory semantic layer, measured with `eval:semantic`
 - [x] Multi-message scanning with a trust model
+- [x] Public demo: keyless, rate-limited, no stored data
 - [x] Deployed API + dashboard, CI green
 - [ ] LLM judge for `flagged` prompts
 - [ ] Output scanning with canary tokens
