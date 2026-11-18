@@ -1,16 +1,16 @@
 :root {
-  --bg: #0b0f14;
-  --bg-elev: #121821;
-  --bg-elev-2: #18202b;
-  --border: #232d3a;
-  --text: #e6edf5;
-  --muted: #8b9bb0;
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --good: #22c55e;
-  --warn: #f59e0b;
-  --danger: #ef4444;
-  --radius: 12px;
+  --bg: #FAFAF9;
+  --bg-elev: #F3F4F6;
+  --bg-elev-2: #F9FAFB;
+  --border: #E5E7EB;
+  --text: #1F2937;
+  --muted: #6B7280;
+  --accent: #FF6B6B;
+  --accent-hover: #FF817F;
+  --good: #22C55E;
+  --warn: #F59E0B;
+  --danger: #EF4444;
+  --radius: 8px;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
 }
@@ -88,12 +88,8 @@ code {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: radial-gradient(
-      900px 500px at 50% -10%,
-      rgba(59, 130, 246, 0.18),
-      transparent 60%
-    ),
-    var(--bg);
+  background: var(--bg);
+  border-radius: var(--radius);
 }
 
 .gate-card {
@@ -101,9 +97,8 @@ code {
   max-width: 420px;
   background: var(--bg-elev);
   border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 28px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  border-radius: var(--radius);
+  padding: 24px;
 }
 
 .logo-row {
@@ -125,7 +120,7 @@ code {
   place-items: center;
   font-weight: 700;
   color: white;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #FF6B6B, #FF817F);
   flex-shrink: 0;
 }
 
@@ -168,17 +163,17 @@ textarea {
   background: var(--bg-elev-2);
   color: var(--text);
   border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 13px;
   font-family: inherit;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, opacity 0.15s;
   white-space: nowrap;
+  border-radius: var(--radius);
 }
 
 .btn:hover {
-  border-color: #33465c;
-  background: #1d2733;
+  opacity: 0.9;
 }
 
 .btn.primary {
@@ -195,21 +190,22 @@ textarea {
 
 .btn.ghost {
   background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
 .btn.danger-ghost {
   background: transparent;
-  color: #f87171;
+  color: #EF4444;
 }
 
 .btn.danger-ghost:hover {
-  background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.4);
 }
 
 .btn.full {
   width: 100%;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .btn:disabled {
