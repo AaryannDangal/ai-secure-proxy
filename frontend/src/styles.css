@@ -259,7 +259,7 @@ textarea {
 }
 
 .nav-item.active {
-  background: rgba(59, 130, 246, 0.14);
+  background: rgba(255, 107, 107, 0.12);
   color: var(--accent-hover);
   font-weight: 500;
 }
